@@ -16,10 +16,13 @@ public class plagiarismScript : MonoBehaviour {
     public Sprite[] ColorblindShapes;
     public KMSelectable Pass;
     public KMSelectable Report;
+    public KMSelectable[] GearSels;
     public KMColorblindMode Colorblind;
     public SpriteRenderer Back;
     public Sprite[] Papers;
     public Sprite Empty;
+    public Transform Platform;
+    public Transform Gear;
 
     // % 0 = hexagon, 1 = triangle, 2 = circle, 3 = square, 4 = heart
     // / 0 = purple, 1 = blue, 2 = orange, 3 = green, 4 = red
@@ -48,6 +51,10 @@ public class plagiarismScript : MonoBehaviour {
 
         Pass.OnInteract += delegate () { ButtonPress(true); return false; };
         Report.OnInteract += delegate () { ButtonPress(false); return false; };
+        GearSels[0].OnInteract += delegate () { StartCoroutine(RotateGear(1)); return false; };
+        GearSels[1].OnInteract += delegate () { StartCoroutine(RotateGear(-1)); return false; };
+        GearSels[0].OnInteractEnded += delegate () { StopAllCoroutines(); };
+        GearSels[1].OnInteractEnded += delegate () { StopAllCoroutines(); };
     }
 
     // Use this for initialization
@@ -58,11 +65,11 @@ public class plagiarismScript : MonoBehaviour {
         Debug.LogFormat("<Plagiarism #{0}> Colorblind mode: {1}", moduleId, colorblindActive);
 
         leftmostDigit = Bomb.GetSerialNumberNumbers().ToArray()[0];
-        sourceShapes = sourceShapes.Where(s => s != leftmostDigit%5).ToArray();
+        sourceShapes = sourceShapes.Where(s => s != leftmostDigit % 5).ToArray();
         Debug.LogFormat("[Plagiarism #{0}] Leftmost digit of the serial number is {1}, removing all instances of {2}s from the source.", moduleId, leftmostDigit, shapeNames[leftmostDigit%5]);
 
         secondLeftmostDigit = Bomb.GetSerialNumberNumbers().ToArray()[1];
-        sourceColors = sourceColors.Where(s => s != secondLeftmostDigit%5).ToArray();
+        sourceColors = sourceColors.Where(s => s != secondLeftmostDigit % 5).ToArray();
         Debug.LogFormat("[Plagiarism #{0}] Second-leftmost digit of the serial number is {1}, removing all instances of {2}s from the source.", moduleId, secondLeftmostDigit, colorNames[secondLeftmostDigit%5]);
 
         for (int e = 0; e < 48; e++) {
@@ -236,6 +243,25 @@ public class plagiarismScript : MonoBehaviour {
             }
         } else {
             GenerateStage();
+        }
+    }
+
+    private IEnumerator RotateGear(int m)
+    {
+        int frameCount = 1;
+        while (!moduleSolved)
+        {
+            float platPos = Platform.localPosition.y + 0.00017f * m;
+            float gearRot = Gear.localRotation.y + frameCount * 3f * m;
+            if (platPos < -0.0056f || platPos > 0.0132f) {
+                StopAllCoroutines();
+            } else
+            {
+                Platform.localPosition = new Vector3 (0f, platPos, -0.0181f);   
+                Gear.localRotation = Quaternion.Euler(0f, gearRot, 0f);
+            }
+            frameCount++;
+            yield return null;
         }
     }
  
